@@ -1,0 +1,11 @@
+{
+    "root": "Tests",
+    "template": "KaTeX and Markdown Basic",
+    "macros": [
+        {
+            "name": "setWhere",
+            "arguments": 2,
+            "content": "\\set{#1\\;|\\;#2}"
+        }
+    ]
+}

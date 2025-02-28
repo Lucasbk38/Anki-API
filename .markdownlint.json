@@ -1,0 +1,11 @@
+{
+    "default": true,
+    "no-multiple-blanks": {
+        "maximum": 2
+    },
+    "no-duplicate-heading": {
+        "siblings_only": true
+    },
+    "no-inline-html": false,
+    "line-length": false
+}

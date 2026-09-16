@@ -186,7 +186,7 @@ export const getConfig = async (filePath: string, ask: Ask) => {
 			const configContent = buffer.toString()
 			const config = JSON.parse(configContent) as Config
 			const root = config?.root ?? parentConfig?.root
-			const relativeDeck = [ root ].concat(demander.slice(dirPath.length).split('/').filter(e => e)).join('::')
+			const relativeDeck = [ root ].concat(path.relative(dirPath, demander).split(path.sep).filter(e => e)).join('::')
 
 			return {
 				root,
@@ -555,7 +555,7 @@ export class FileHandler {
 		const getFields = (card: typeof cards[number]) => Object.fromEntries(fields.map((field, index) => [field, card.fields[index]]))
 
 		const existingCardsIds = await findNotes(deckName)
-		const [ existingCards, fields ] = await Promise.all([ getNotesInfo(existingCardsIds), findModel(this.config.template).then(model => model.flds.sort().map(e => e.name)) ])
+		const [ existingCards, fields ] = await Promise.all([ getNotesInfo(existingCardsIds), findModel(this.config.template).then(model => model.flds.sort((a, b) => a.ord - b.ord).map(e => e.name)) ])
 
 		const line = () => this.lines[i]
 

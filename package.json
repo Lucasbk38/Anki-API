@@ -4,6 +4,7 @@
   "description": "Sync Markdown notes with Anki flashcards, with LaTeX macro support",
   "publisher": "Lucasbk38",
   "version": "0.1.0",
+  "icon": "resources/icon.png",
   "license": "MIT",
   "repository": {
     "type": "git",

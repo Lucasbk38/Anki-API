@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3651C7"/>
+      <stop offset="1" stop-color="#1E2F8A"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="400" rx="28" fill="#F4F6FD"/>
+
+  <!-- Markdown file -->
+  <g transform="translate(90,110)">
+    <rect x="0" y="0" width="170" height="200" rx="14" fill="#FFFFFF" stroke="#D7DCF2" stroke-width="2"/>
+    <rect x="28" y="40" width="70" height="14" rx="7" fill="#2A3B8F"/>
+    <rect x="28" y="68" width="114" height="9" rx="4.5" fill="#B7BEE7"/>
+    <rect x="28" y="88" width="94" height="9" rx="4.5" fill="#B7BEE7"/>
+    <rect x="28" y="108" width="104" height="9" rx="4.5" fill="#B7BEE7"/>
+    <rect x="28" y="140" width="114" height="9" rx="4.5" fill="#B7BEE7"/>
+    <rect x="28" y="160" width="70" height="9" rx="4.5" fill="#B7BEE7"/>
+  </g>
+  <text x="175" y="350" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#2A3B8F" text-anchor="middle">Markdown</text>
+
+  <!-- arrow 1 -->
+  <path d="M300 210 L400 210" stroke="#9AA6D9" stroke-width="6" stroke-linecap="round"/>
+  <path d="M382 192 L402 210 L382 228" fill="none" stroke="#9AA6D9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- AnkiAPI mark -->
+  <g transform="translate(500,90)">
+    <rect x="0" y="0" width="220" height="220" rx="40" fill="url(#bg)"/>
+    <rect x="30" y="24" width="112" height="146" rx="16" fill="#1730A8" opacity="0.55" transform="rotate(9 86 97)"/>
+    <rect x="20" y="22" width="112" height="146" rx="16" fill="#F5F7FF" transform="rotate(-6 76 95)"/>
+    <g transform="rotate(-6 76 95)">
+      <rect x="38" y="52" width="62" height="12" rx="6" fill="#2A3B8F"/>
+      <rect x="38" y="76" width="48" height="8" rx="4" fill="#9AA6D9"/>
+      <rect x="38" y="94" width="54" height="8" rx="4" fill="#9AA6D9"/>
+    </g>
+    <circle cx="172" cy="172" r="36" fill="#FF8A3D"/>
+    <path d="M156 164 a17 17 0 1 1 -1.6 10.2" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+    <path d="M154 152 l1.6 14 l14 -3.4 z" fill="#FFFFFF"/>
+  </g>
+  <text x="610" y="350" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#2A3B8F" text-anchor="middle">AnkiAPI</text>
+
+  <!-- arrow 2 -->
+  <path d="M800 210 L900 210" stroke="#9AA6D9" stroke-width="6" stroke-linecap="round"/>
+  <path d="M882 192 L902 210 L882 228" fill="none" stroke="#9AA6D9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Anki deck -->
+  <g transform="translate(940,110)">
+    <rect x="14" y="14" width="170" height="200" rx="16" fill="#D7DCF2"/>
+    <rect x="0" y="0" width="170" height="200" rx="16" fill="#FFFFFF" stroke="#D7DCF2" stroke-width="2"/>
+    <rect x="26" y="34" width="118" height="70" rx="10" fill="#EDF0FC"/>
+    <rect x="42" y="56" width="86" height="10" rx="5" fill="#2A3B8F"/>
+    <rect x="42" y="76" width="60" height="8" rx="4" fill="#9AA6D9"/>
+    <rect x="26" y="122" width="118" height="8" rx="4" fill="#B7BEE7"/>
+    <rect x="26" y="142" width="90" height="8" rx="4" fill="#B7BEE7"/>
+    <rect x="26" y="162" width="70" height="8" rx="4" fill="#B7BEE7"/>
+  </g>
+  <text x="1025" y="350" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#2A3B8F" text-anchor="middle">Anki deck</text>
+</svg>

@@ -86,19 +86,6 @@ export const activate = async (context: vscode.ExtensionContext) => {
 		}
 	})
 
-	const editFile = async (file: string, edit: ToEdit & { method: 'replace' }, save = false) => {
-		const textEditor = vscode.window.visibleTextEditors.find(e => e.document.fileName === path.resolve(file))
-
-		if (textEditor) {
-			await makeEdits([edit], textEditor)
-			if (save)
-				await textEditor.document.save()
-		} else {
-			//! FIXME
-			throw new Error('not implemented')
-		}
-	}
-
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
@@ -110,7 +97,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 				throw new Error('To run Anki API, you have to open a .md file')
 			}
 			
-			const config = await getConfig(activeTextEditor.document.fileName, ask, editFile)
+			const config = await getConfig(activeTextEditor.document.fileName, ask)
 
 			if (!config)
 				return

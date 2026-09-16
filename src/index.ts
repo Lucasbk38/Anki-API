@@ -139,8 +139,7 @@ type Config = {
 	relativeDeck: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getConfig = async (filePath: string, ask: Ask, editFile: (file: string, edit: ToEdit & { method: 'replace' }) => Promise<void>) => {
+export const getConfig = async (filePath: string, ask: Ask) => {
 
 	const parseConfig = async (config: Config) => {
 		if (typeof config.templateNameAsHeader !== 'boolean')
@@ -151,23 +150,24 @@ export const getConfig = async (filePath: string, ask: Ask, editFile: (file: str
 
 		if (!config.root)
 			throw new Error('no root in config')
-		
+
 		const models = await getModels()
-		
+
 		if (!models.includes(config.template)) {
-			// const newModel = await ask({
-			// 	type: 'closed',
-			// 	question: `Template "${ config.template }" does not exist, which template would you like to use by default ?`,
-			// 	options: models
-			// })
+			const newModel = await ask({
+				type: 'closed',
+				question: `Template "${ config.template }" does not exist, which template would you like to use for this sync ?`,
+				options: models
+			})
 
-			// if (!newModel)
-			// 	return
-			// }
+			if (!newModel)
+				return
 
-			throw new Error('Unable to automatically update config file')
+			showNotification('info', `Using "${ newModel }" for this sync. Update "template" in ${ configFileName } to stop being asked.`)
+
+			return { ...config, template: newModel }
 		}
-		
+
 		return config
 	}
 

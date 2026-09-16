@@ -3,7 +3,7 @@
   "displayName": "AnkiAPI",
   "description": "Sync Markdown notes with Anki flashcards, with LaTeX macro support",
   "publisher": "Lucasbk38",
-  "version": "0.0.16",
+  "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",

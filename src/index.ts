@@ -172,7 +172,6 @@ export const getConfig = async (filePath: string, ask: Ask) => {
 	}
 
 	const getConfigFromDir = async (dirPath: string, demander = dirPath): Promise<Config> => {
-		console.log(dirPath, demander)
 		const parent = path.dirname(dirPath)
         
 		if (parent === dirPath)
@@ -570,7 +569,12 @@ export class FileHandler {
             
 			const rawContent = []
 
-			while (i < this.lines.length && (!parseHeader(line()) || (parseHeader(line())!.level > header!.level && header.data.group))) {
+			while (i < this.lines.length) {
+				const nextHeader = parseHeader(line())
+
+				if (nextHeader && (nextHeader.level <= header.level || !header.data.group))
+					break
+
 				rawContent.push(line())
 				i++
 			}
@@ -591,11 +595,17 @@ export class FileHandler {
 					return raw.map(e => e.trim())
 				})
 
-				if (matrix.length < 3 || !matrix.every(e => e.length === n) || !matrix[1].every(e => /^:?-+:?$/.test(e)) || !fields.every(field => matrix[0].includes(field))) {
-					console.log(matrix, fields)
-					debugger
-					throw new Error()
-				}
+				if (matrix.length < 3)
+					throw new Error(`Table under header "${ header.name }" must have a header row, a separator row and at least one data row`)
+
+				if (!matrix.every(e => e.length === n))
+					throw new Error(`Table under header "${ header.name }" must have exactly ${ n } columns on every row`)
+
+				if (!matrix[1].every(e => /^:?-+:?$/.test(e)))
+					throw new Error(`Table under header "${ header.name }" has an invalid separator row`)
+
+				if (!fields.every(field => matrix[0].includes(field)))
+					throw new Error(`Table under header "${ header.name }" is missing one of the required columns: ${ fields.join(', ') }`)
 
 				const fieldsMap = fields.map(field => matrix[0].indexOf(field))
 

@@ -12,6 +12,32 @@ import * as vscode from 'vscode'
 
 
 
+let lastActiveMarkdownUri: vscode.Uri | undefined
+
+/**
+ * Keep track of the last active markdown editor's URI.
+ * This is updated whenever the active editor changes and its languageId === 'markdown'.
+ */
+const setupActiveEditorTracker = (context: vscode.ExtensionContext) => {
+	// initialize from current active editor if it is markdown
+	if (vscode.window.activeTextEditor?.document?.languageId === 'markdown') {
+		lastActiveMarkdownUri = vscode.window.activeTextEditor.document.uri
+	}
+
+	const disposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
+		if (!editor) return
+		try {
+			if (editor.document && editor.document.languageId === 'markdown') {
+				lastActiveMarkdownUri = editor.document.uri
+			}
+		} catch (e) {
+			// ignore
+		}
+	})
+
+	context.subscriptions.push(disposable)
+}
+
 export const showError = async <R> (message: string, recoverOptions: RecoverOptions<R> = []) => {
 	const opt = await vscode.window.showErrorMessage(message, ...recoverOptions.map(e => e.name))
 
@@ -30,6 +56,9 @@ export const activate = async (context: vscode.ExtensionContext) => {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	log('Congratulations, your extension "ankiapi" is now active!')
+
+	setupActiveEditorTracker(context)
+
 	
 	const ask = async <S extends string>(questionData: Asker<S>) => {
 		if (questionData.type === 'closed')
@@ -153,37 +182,37 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
 	return {
 		extendMarkdownIt (md: MarkdownIt) {
-			// md.core.ruler.push('math_block', state => {
+			// Règle core : parcourt les tokens et modifie les tokens de type contenant 'math'
+			md.core.ruler.push('ankiapi_color_math', state => {
+				if (!lastActiveMarkdownUri)
+					return false
 
-			// })
+				const macros = getParents(lastActiveMarkdownUri.fsPath)
+					.map(k => configs[k])
+					.filter(e => typeof e === 'object' && e !== null && 'macros' in e)
+					.map(e => e.macros as Macro[])
+					.flat()
+					.reduce((g, c) => g.some(e => e.name === c.name) ? g : g.concat([c]), [] as Macro[])
 
-			const mathRulesNames = [ 'math_block', 'math_inline', 'math_inline_bare_block', 'math_inline_block' ]
+				const parseTokens = (tokens: typeof state.tokens) => {
+					for (const token of tokens) {
+						if (!token) continue
 
-			log(configs)
+						// token.type peut être 'math_inline', 'math_block', etc. -> recherche 'math'
+						if (token.type && token.type.toLowerCase().includes('math'))
+							if (typeof token.content === 'string')
+								token.content = extendLatex(token.content, macros, false)
 
-			for (const ruleName of mathRulesNames) {
-				const baseRule = md.renderer.rules[ruleName]!
-
-				md.renderer.rules[ruleName] = (tokens, ...args) => {
-					const macros = getParents(args[2].currentDocument.fsPath)
-						.map(k => configs[k])
-						.filter(e => typeof e === 'object' && e !== null && 'macros' in e)
-						.map(e => e.macros as Macro[])
-						.flat()
-						.reduce((g, c) => g.some(e => e.name === c.name) ? g : g.concat([c]), [] as Macro[])
-					
-					for (const t of tokens) {
-						if (!mathRulesNames.includes(t.type) || t.attrGet('math_anki_extension_activated'))
-							continue
-						
-						t.attrPush([ 'math_anki_extension_activated', 'true' ])
-						
-						t.content = extendLatex(t.content, macros, false)
+						// certains tokens (inline) ont des children où se trouvent les math inline
+						if (token.children && Array.isArray(token.children) && token.children.length)
+							parseTokens(token.children)
 					}
-					
-					return baseRule(tokens, ...args)
 				}
-			}
+
+				parseTokens(state.tokens)
+				
+				return true
+			})
 
 			return md
 		}

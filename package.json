@@ -3,7 +3,7 @@
   "displayName": "AnkiAPI",
   "description": "API for Anki",
   "publisher": "Lucasbk38",
-  "version": "0.0.5",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.92.0"
   },

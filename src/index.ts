@@ -136,6 +136,7 @@ type Config = {
 	root: string
 	macros: Macro[]
 	parseMd: boolean
+	relativeDeck: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -170,27 +171,31 @@ export const getConfig = async (filePath: string, ask: Ask, editFile: (file: str
 		return config
 	}
 
-	const getConfigFromDir = async (dirPath: string): Promise<Config> => {
+	const getConfigFromDir = async (dirPath: string, demander = dirPath): Promise<Config> => {
+		console.log(dirPath, demander)
 		const parent = path.dirname(dirPath)
         
 		if (parent === dirPath)
 			return {} as Config
 		
-		const parentConfig = await getConfigFromDir(parent)
+		const parentConfig = await getConfigFromDir(parent, demander)
 		
 		if ((await readdir(dirPath)).includes(configFileName)) {
 			const configFilePath = path.join(dirPath, configFileName)
 			const buffer = await readFile(configFilePath)
 			const configContent = buffer.toString()
 			const config = JSON.parse(configContent) as Config
+			const root = config?.root ?? parentConfig?.root
+			const relativeDeck = [ root ].concat(demander.slice(dirPath.length).split('/').filter(e => e)).join('::')
 
 			return {
-				root: config?.root ?? parentConfig?.root,
+				root,
 				template: config?.template ?? parentConfig?.template,
 				macros: (config?.macros ?? []).concat(parentConfig?.macros ?? []),
 				templateNameAsHeader: config?.templateNameAsHeader ?? parentConfig?.templateNameAsHeader ?? true,
-				parseMd: config?.parseMd ?? parentConfig?.parseMd ?? false
-			} as Config
+				parseMd: config?.parseMd ?? parentConfig?.parseMd ?? false,
+				relativeDeck: config.root ? relativeDeck : parentConfig.relativeDeck
+			} satisfies Config
 		}
 
 		return parentConfig
@@ -235,16 +240,18 @@ const trimArray = (arr: string[]) => {
 
 export type Macro = {
 	name: string
-	arguments: number
+	priority?: boolean
+	arguments?: number
+	let?: boolean
 	content: string
 	new?: boolean
 }
 
-export const extendLatex = (content: string, macros: Macro[], ankiLatex: boolean): string => {
+export const extendLatex = (rawContent: string, macros: Macro[], ankiLatex: boolean): string => {
 	const includedMacros: string[] = []
 
 	if (ankiLatex)
-		return extendLatex(content, macros.concat([
+		return extendLatex(rawContent, macros.concat([
 			{
 				name: 'set',
 				arguments: 1,
@@ -257,11 +264,21 @@ export const extendLatex = (content: string, macros: Macro[], ankiLatex: boolean
 			}
 		]), false)
 
+	let priorityContent = ''
+
+	const content = () => (priorityContent ? (priorityContent + ' ') : '') + rawContent
+
 	// eslint-disable-next-line no-constant-condition
 	outer: while (true) {
 		for (const macro of macros.filter(e => !includedMacros.includes(e.name))) {
-			if (new RegExp(`\\\\${ macro.name }(?![A-Za-z])`).test(content)) {
-				content = `\\${ (macro.new ?? true) ? 'newcommand' : 'renewcommand' }{\\${ macro.name }}[${ macro.arguments }]{${ macro.content }} ` + content
+			if (new RegExp(`\\\\${ macro.name }(?![A-Za-z])`).test(content())) {
+				const macroText = macro.let ? `\\let\\${ macro.name + macro.content }` : `\\${(macro.new ?? true) ? 'newcommand' : 'renewcommand'}{\\${macro.name}}[${macro.arguments ?? 0}]{${macro.content}} `
+
+				if (macro.priority)
+					priorityContent = macroText + priorityContent
+				else
+					rawContent = macroText + rawContent
+
 				includedMacros.push(macro.name)
 				continue outer
 			}
@@ -270,7 +287,7 @@ export const extendLatex = (content: string, macros: Macro[], ankiLatex: boolean
 		break
 	}
 
-	return content
+	return content()
 }
 
 const compileData = (data: Record<string, string | number | boolean | (string | number | boolean)[]>, includeLeadingSpace: boolean) => {
@@ -435,7 +452,7 @@ export class FileHandler {
 			const deckName = await this.ask({
 				type: 'open',
 				question: 'What do you want your deck name to be ?',
-				value: (this.config.root ? this.config.root + '::' : '') + fileHeaderName.trim(),
+				value: (this.config.relativeDeck ? this.config.relativeDeck + '::' : '') + fileHeaderName.trim(),
 				placeholder: 'Deck name'
 			})
 
@@ -462,7 +479,7 @@ export class FileHandler {
 			const createdDeckId = await createDeck(deckName)
 
 			try {
-				await showNotification('info', `Deck "${ deckName }" created`)
+				showNotification('info', `Deck "${ deckName }" created`)
 	
 				this.existingDecks = await getDecksWithIds()
 				return createdDeckId

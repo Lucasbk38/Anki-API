@@ -4,6 +4,13 @@ All notable changes to the "ankiapi" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.1]
+
+- Fixed crashes (`Cannot convert undefined or null to object`, `Cannot use 'in'
+  operator ... in null`) when Anki answers with an empty response because it is
+  busy (e.g. right after a sync): requests are now retried, and a clear error is
+  shown if Anki still does not answer
+
 ## [0.1.0]
 
 - Initial release

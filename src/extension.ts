@@ -59,8 +59,16 @@ export const showError = async <R> (message: string, recoverOptions: RecoverOpti
 	return await recoverOptions.find(e => e.name === opt)!.callback()
 }
 
-export const showNotification = (type: 'info' | 'warning' | 'error', message: string, options: string[] = []) =>
-	vscode.window[({ info: 'showInformationMessage', error: 'showErrorMessage', warning: 'showWarningMessage' } as const)[type]](message, ...options)
+let outputChannel: vscode.OutputChannel | undefined
+
+/** Every notification is also written to the "AnkiAPI" Output channel and the status bar, in case toasts are hidden (Do Not Disturb). */
+export const showNotification = (type: 'info' | 'warning' | 'error', message: string, options: string[] = []) => {
+	outputChannel ??= vscode.window.createOutputChannel('AnkiAPI')
+	outputChannel.appendLine(`[${ new Date().toLocaleTimeString() }] ${ message }`)
+	vscode.window.setStatusBarMessage(message, 8000)
+
+	return vscode.window[({ info: 'showInformationMessage', error: 'showErrorMessage', warning: 'showWarningMessage' } as const)[type]](message, ...options)
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -110,8 +118,6 @@ export const activate = async (context: vscode.ExtensionContext) => {
 			showNotification('warning', 'AnkiAPI: no Markdown file to sync. Open a .md file in the editor first.')
 			return
 		}
-
-		showNotification('info', 'AnkiAPI: sync started…')
 
 		try {
 			await vscode.window.withProgress({

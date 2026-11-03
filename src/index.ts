@@ -25,7 +25,11 @@ type TSCard = {
 	}) => void
 }
 
-export const showCardUpdatedStatus = (card: TSCard, status: string) => {
+const stats = { created: 0, updated: 0 }
+
+export const showCardUpdatedStatus = (card: TSCard, status: 'created' | 'updated') => {
+	stats[status]++
+
 	const rawCardName = card.fields[0]
 	const matched = /^(?:<(\w+)>(?<a>.+)<\/\1>|&lt;(.+)&gt;(?<b>.+)&lt;\/\3&gt;|(?<c>.+))$/.exec(rawCardName.trim())!
 	const cardName = matched.groups!.a ?? matched.groups!.b ?? matched.groups!.c
@@ -744,6 +748,8 @@ export class FileHandler {
 	}
 
 	async handle () {
+		stats.created = 0
+		stats.updated = 0
 		await syncAnki()
 		this.existingDecks = await getDecksWithIds()
 		const deckId = await this.handleFileHeader()
@@ -758,6 +764,6 @@ export class FileHandler {
 		this.edit()
 		await syncAnki()
 
-		showNotification('info', 'Everything synced')
+		showNotification('info', `AnkiAPI: sync finished — ${ stats.created } created, ${ stats.updated } updated`)
 	}
 }

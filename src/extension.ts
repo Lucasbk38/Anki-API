@@ -38,6 +38,18 @@ const setupActiveEditorTracker = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(disposable)
 }
 
+/** Active editor if it is a .md file, else the last Markdown editor still open (e.g. when the preview has focus). */
+const findMarkdownEditor = () => {
+	const isMd = (e?: vscode.TextEditor) => !!e && e.document.fileName.endsWith('.md')
+	const active = vscode.window.activeTextEditor
+
+	if (isMd(active))
+		return active
+
+	return vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === lastActiveMarkdownUri?.toString())
+		?? vscode.window.visibleTextEditors.find(isMd)
+}
+
 export const showError = async <R> (message: string, recoverOptions: RecoverOptions<R> = []) => {
 	const opt = await vscode.window.showErrorMessage(message, ...recoverOptions.map(e => e.name))
 
@@ -89,7 +101,16 @@ export const activate = async (context: vscode.ExtensionContext) => {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerTextEditorCommand('ankiapi.syncFile', async () => {
+	const disposable = vscode.commands.registerCommand('ankiapi.syncFile', async () => {
+		// registerTextEditorCommand silently does nothing when no text editor has focus
+		// (e.g. the Markdown preview), so resolve the editor ourselves
+		const textEditor = findMarkdownEditor()
+
+		if (!textEditor) {
+			showNotification('warning', 'AnkiAPI: no Markdown file to sync. Open a .md file in the editor first.')
+			return
+		}
+
 		showNotification('info', 'AnkiAPI: sync started…')
 
 		try {
@@ -98,7 +119,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 				title: 'AnkiAPI: syncing…',
 				cancellable: false
 			}, async () => {
-				const activeTextEditor = vscode.window.activeTextEditor!
+				const activeTextEditor = textEditor
 
 				if (!activeTextEditor.document || !activeTextEditor.document.fileName.endsWith('.md')) {
 					throw new Error('To run Anki API, you have to open a .md file')
@@ -114,7 +135,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 				const fileHandler = new FileHandler(
 					activeTextEditor.document.getText(),
 					config,
-					makeEdits,
+					(edits) => makeEdits(edits, textEditor),
 					ask
 				)
 

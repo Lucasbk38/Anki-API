@@ -17,7 +17,8 @@ const requestAnkiAPI = async <R> (action: string, params = {}) => {
 		}),
 		headers: {
 			'Content-type': 'application/json; charset=UTF-8',
-		}
+		},
+		signal: AbortSignal.timeout(20_000)
 	})
 		.then(async value => await value.json() as { result: R } | { error: Error })
 		.then(value => {
@@ -40,8 +41,21 @@ const requestAnkiAPI = async <R> (action: string, params = {}) => {
 					return result
 			}
 
+			if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+				const result = await showError<R | undefined>(
+					`Anki did not respond to "${ action }" within 20s. It may be stuck on a dialog (e.g. a sync login prompt or a "full sync required" confirmation) in the Anki app itself — check its window.`,
+					[
+						{ name: 'Retry', callback: () => requestAnkiAPI(action, params) },
+						{ name: 'Cancel', callback: async () => undefined },
+					]
+				)
+
+				if (result)
+					return result
+			}
+
 			logError('AnkiAPIError', action, err)
-    
+
 			throw err
 		})
 }

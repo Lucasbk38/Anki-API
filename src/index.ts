@@ -747,9 +747,12 @@ export class FileHandler {
 		await syncAnki()
 		this.existingDecks = await getDecksWithIds()
 		const deckId = await this.handleFileHeader()
-        
-		if (!deckId) return
-        
+
+		if (!deckId) {
+			showNotification('warning', 'Sync cancelled: no deck was selected.')
+			return
+		}
+
 		await this.handleCards(deckId)
         
 		this.edit()

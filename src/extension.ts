@@ -90,26 +90,36 @@ export const activate = async (context: vscode.ExtensionContext) => {
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	const disposable = vscode.commands.registerTextEditorCommand('ankiapi.syncFile', async () => {
+		showNotification('info', 'AnkiAPI: sync started…')
+
 		try {
-			const activeTextEditor = vscode.window.activeTextEditor!
-	
-			if (!activeTextEditor.document || !activeTextEditor.document.fileName.endsWith('.md')) {
-				throw new Error('To run Anki API, you have to open a .md file')
-			}
-			
-			const config = await getConfig(activeTextEditor.document.fileName, ask)
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'AnkiAPI: syncing…',
+				cancellable: false
+			}, async () => {
+				const activeTextEditor = vscode.window.activeTextEditor!
 
-			if (!config)
-				return
-			
-			const fileHandler = new FileHandler(
-				activeTextEditor.document.getText(),
-				config,
-				makeEdits,
-				ask
-			)
+				if (!activeTextEditor.document || !activeTextEditor.document.fileName.endsWith('.md')) {
+					throw new Error('To run Anki API, you have to open a .md file')
+				}
 
-			await fileHandler.handle()
+				const config = await getConfig(activeTextEditor.document.fileName, ask)
+
+				if (!config) {
+					showNotification('warning', 'AnkiAPI: sync cancelled (no template selected).')
+					return
+				}
+
+				const fileHandler = new FileHandler(
+					activeTextEditor.document.getText(),
+					config,
+					makeEdits,
+					ask
+				)
+
+				await fileHandler.handle()
+			})
 		} catch (err) {
 			logError(err)
 
@@ -117,12 +127,15 @@ export const activate = async (context: vscode.ExtensionContext) => {
 				if ('recoverOptions' in err) {
 					showError(err.message, err.recoverOptions as RecoverOptions<unknown>)
 				} else {
-					await vscode.window.showErrorMessage(err.message)
+					await vscode.window.showErrorMessage(`AnkiAPI: ${ err.message }`)
 				}
 			}
 
 			else if (typeof err === 'string')
-				await vscode.window.showErrorMessage(err)
+				await vscode.window.showErrorMessage(`AnkiAPI: ${ err }`)
+
+			else
+				await vscode.window.showErrorMessage('AnkiAPI: sync failed with an unexpected error (see "AnkiAPI" in the Output panel for details).')
 		}
 
 		log('Done'.green)
